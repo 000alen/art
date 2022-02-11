@@ -2,10 +2,11 @@ import { IAttributes, IConfiguration } from "./types";
 import fs from "fs";
 import path from "path";
 import Jimp from "jimp";
+import { randomColor } from "./utils";
 
 export class NFTFactory {
   private layers: Map<string, { name: string; rarity: number }[]>;
-  private elements: Map<string, { rarity: number; buffer?: Buffer }>;
+  private buffers: Map<string, Buffer>;
 
   constructor(
     public configuration: IConfiguration,
@@ -13,7 +14,7 @@ export class NFTFactory {
     public outputDir: string
   ) {
     this.layers = new Map<string, { name: string; rarity: number }[]>();
-    this.elements = new Map<string, { rarity: number; buffer?: Buffer }>();
+    this.buffers = new Map<string, Buffer>();
   }
 
   async loadLayers() {
@@ -56,6 +57,7 @@ export class NFTFactory {
     fs.mkdirSync(path.join(this.outputDir, "images"));
   }
 
+  // ! TODO: Probability distribution is uniform; should consider element's rarity
   generateRandomAttributes(n: number): IAttributes[] {
     const attributes: IAttributes[] = [];
 
@@ -79,27 +81,23 @@ export class NFTFactory {
     return attributes;
   }
 
+  // ! TODO: Implement a deterministic way to generate attributes
+  generateAttributes(n: number): IAttributes[] {
+    throw new Error("Method not implemented yet.");
+  }
+
+  // ! TODO: Implement metadata generation
   generateMetadata(attributes: IAttributes[]) {}
 
-  composeImages(back: Jimp, front: Jimp): Jimp {
+  private composeImages(back: Jimp, front: Jimp): Jimp {
     back.composite(front, 0, 0);
     return back;
   }
 
   private ensureBuffer(elementKey: string) {
-    if (
-      !this.elements.has(elementKey) ||
-      this.elements.get(elementKey)!.buffer === undefined
-    ) {
+    if (!this.buffers.has(elementKey)) {
       const buffer = fs.readFileSync(path.join(this.inputDir, elementKey));
-
-      if (this.elements.has(elementKey))
-        this.elements.get(elementKey)!.buffer = buffer;
-      else
-        this.elements.set(elementKey, {
-          rarity: 1, // ! TODO: Compute rarity
-          buffer,
-        });
+      this.buffers.set(elementKey, buffer);
     }
   }
 
@@ -107,10 +105,10 @@ export class NFTFactory {
     for (let i = 0; i < attributes.length; i++) {
       const traits = attributes[i];
 
-      let image = await Jimp.create(
+      const image = await Jimp.create(
         this.configuration.width,
         this.configuration.height,
-        "#ffffff"
+        randomColor()
       );
 
       for (let j = 0; j < traits.length; j++) {
@@ -119,14 +117,12 @@ export class NFTFactory {
         const elementKey = path.join(trait.name, trait.value);
         this.ensureBuffer(elementKey);
 
-        const currentImage = await Jimp.read(
-          this.elements.get(elementKey)!.buffer!
-        );
+        const current = await Jimp.read(this.buffers.get(elementKey)!);
 
-        image = this.composeImages(image, currentImage);
+        this.composeImages(image, current);
       }
 
-      image.write(path.join(this.outputDir, "images", `${i}.png`));
+      await image.writeAsync(path.join(this.outputDir, "images", `${i}.png`));
     }
   }
 }
