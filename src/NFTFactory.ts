@@ -133,7 +133,6 @@ export class NFTFactory {
     return back;
   }
 
-  // ! TODO: Make async
   private async ensureBuffer(elementKey: string) {
     if (!this.buffers.has(elementKey)) {
       const buffer = await fs.promises.readFile(
