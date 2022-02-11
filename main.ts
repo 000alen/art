@@ -30,14 +30,14 @@ async function main() {
   const attributes = factory.generateRandomAttributes(10);
 
   await factory.generateImages(attributes);
-  const imagesCID = await factory.deployImages();
+  // const imagesCID = await factory.deployImages();
 
-  console.log(`Images CID: ${imagesCID}`);
+  // console.log(`Images CID: ${imagesCID}`);
 
-  await factory.generateMetadata(imagesCID, attributes);
-  const metadataCID = await factory.deployMetadata();
+  // await factory.generateMetadata(imagesCID, attributes);
+  // const metadataCID = await factory.deployMetadata();
 
-  console.log(`Metadata CID: ${metadataCID}`);
+  // console.log(`Metadata CID: ${metadataCID}`);
 }
 
 main();

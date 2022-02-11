@@ -134,15 +134,17 @@ export class NFTFactory {
   }
 
   // ! TODO: Make async
-  private ensureBuffer(elementKey: string) {
+  private async ensureBuffer(elementKey: string) {
     if (!this.buffers.has(elementKey)) {
-      const buffer = fs.readFileSync(path.join(this.inputDir, elementKey));
+      const buffer = await fs.promises.readFile(
+        path.join(this.inputDir, elementKey)
+      );
       this.buffers.set(elementKey, buffer);
     }
   }
 
-  // ! TODO Evaluate parallelism or batching
-  // As far as I know, Javascript does not support parallelism (?)
+  // ! TODO: Evaluate parallelism or batching
+  //         As far as I know, Javascript does not support parallelism (?)
   async generateImages(attributes: IAttributes[]) {
     for (let i = 0; i < attributes.length; i++) {
       const traits = attributes[i];
@@ -159,7 +161,7 @@ export class NFTFactory {
         const trait = traits[j];
 
         const elementKey = path.join(trait.name, trait.value);
-        this.ensureBuffer(elementKey);
+        await this.ensureBuffer(elementKey);
 
         const current = await Jimp.read(this.buffers.get(elementKey)!);
 
@@ -229,7 +231,6 @@ export class NFTFactory {
     return this.imagesCID!;
   }
 
-  // ! TODO: Implement
   async deployMetadata(force: boolean = false): Promise<string> {
     if (this.metadataCID !== undefined && !force) {
       console.warn(
