@@ -1,13 +1,17 @@
-import { IAttributes, IConfiguration, IMetadata } from "./types";
+import { IAttributes, IConfiguration } from "./types";
 import fs from "fs";
 import path from "path";
 import Jimp from "jimp";
-import { randomColor, rarity } from "./utils";
-import { rarityWeightedChoice } from "./random";
+import { randomColor, rarityWeightedChoice, rarity } from "./utils";
+import { create, IPFS } from "ipfs";
 
 export class NFTFactory {
   private layers: Map<string, { name: string; rarity: number }[]>;
   private buffers: Map<string, Buffer>;
+  private ipfs?: IPFS;
+
+  public imagesCID?: string;
+  public metadataCID?: string;
 
   constructor(
     public configuration: IConfiguration,
@@ -129,6 +133,7 @@ export class NFTFactory {
     return back;
   }
 
+  // ! TODO: Make async
   private ensureBuffer(elementKey: string) {
     if (!this.buffers.has(elementKey)) {
       const buffer = fs.readFileSync(path.join(this.inputDir, elementKey));
@@ -193,5 +198,64 @@ export class NFTFactory {
       path.join(this.outputDir, "json", "metadata.json"),
       JSON.stringify(metadatas)
     );
+  }
+
+  private async ensureIPFS() {
+    if (this.ipfs === undefined) this.ipfs = await create();
+  }
+
+  // ! TODO: Optimize; buffers might be loaded in this.buffers (use this.ensureBuffer)
+  async deployImages(force: boolean = false): Promise<string> {
+    if (this.imagesCID !== undefined && !force) {
+      console.warn(
+        `WARN: images have already been deployed to IPFS (cid: ${this.imagesCID})`
+      );
+      return this.imagesCID;
+    }
+
+    const imagesDir = path.join(this.outputDir, "images");
+    const imageFiles = (await fs.promises.readdir(imagesDir))
+      .filter((file) => !file.startsWith("."))
+      .map((fileName) => ({
+        path: path.join("images", fileName),
+        content: fs.createReadStream(path.join(imagesDir, fileName)),
+      }));
+
+    await this.ensureIPFS();
+
+    for await (const result of this.ipfs!.addAll(imageFiles))
+      if (result.path == "images") this.imagesCID = result.cid.toString();
+
+    return this.imagesCID!;
+  }
+
+  // ! TODO: Implement
+  async deployMetadata(force: boolean = false): Promise<string> {
+    if (this.metadataCID !== undefined && !force) {
+      console.warn(
+        `WARN: metadata has already been deployed to IPFS (cid: ${this.metadataCID})`
+      );
+      return this.metadataCID;
+    }
+
+    if (this.imagesCID === undefined)
+      throw new Error("Images have not been deployed to IPFS");
+
+    await this.ensureIPFS();
+
+    const jsonDir = path.join(this.outputDir, "json");
+    const jsonFiles = (await fs.promises.readdir(jsonDir))
+      .filter((file) => !file.startsWith("."))
+      .map((fileName) => ({
+        path: path.join("json", fileName),
+        content: fs.createReadStream(path.join(jsonDir, fileName)),
+      }));
+
+    await this.ensureIPFS();
+
+    for await (const result of this.ipfs!.addAll(jsonFiles))
+      if (result.path == "json") this.metadataCID = result.cid.toString();
+
+    return this.metadataCID!;
   }
 }

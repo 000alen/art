@@ -28,9 +28,16 @@ async function main() {
   await factory.bootstrapOutput();
 
   const attributes = factory.generateRandomAttributes(10);
-  // const attributes = factory.generateAllAttributes();
+
   await factory.generateImages(attributes);
-  await factory.generateMetadata("UNDEFINED", attributes);
+  const imagesCID = await factory.deployImages();
+
+  console.log(`Images CID: ${imagesCID}`);
+
+  await factory.generateMetadata(imagesCID, attributes);
+  const metadataCID = await factory.deployMetadata();
+
+  console.log(`Metadata CID: ${metadataCID}`);
 }
 
 main();
