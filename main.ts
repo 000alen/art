@@ -27,10 +27,10 @@ async function main() {
   await factory.loadLayers();
   await factory.bootstrapOutput();
 
-  const attributes = factory.generateRandomAttributes(100);
+  const attributes = factory.generateRandomAttributes(10);
   // const attributes = factory.generateAllAttributes();
   await factory.generateImages(attributes);
-  await factory.generateMetadata(attributes);
+  await factory.generateMetadata("UNDEFINED", attributes);
 }
 
 main();

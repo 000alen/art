@@ -136,6 +136,8 @@ export class NFTFactory {
     }
   }
 
+  // ! TODO Evaluate parallelism or batching
+  // As far as I know, Javascript does not support parallelism (?)
   async generateImages(attributes: IAttributes[]) {
     for (let i = 0; i < attributes.length; i++) {
       const traits = attributes[i];
@@ -163,18 +165,21 @@ export class NFTFactory {
     }
   }
 
-  async generateMetadata(attributes: IAttributes[]) {
-    const metadatas: IMetadata[] = [];
+  async generateMetadata(cid: string, attributes: IAttributes[]) {
+    const metadatas = [];
     for (let i = 0; i < attributes.length; i++) {
       const traits = attributes[i];
 
-      const metadata: IMetadata = {
+      const metadata = {
         name: this.configuration.name,
         description: this.configuration.description,
-        image: `${i}.png`, // ! TODO: Use URI
+        image: `ipfs://${cid}/${i}.png`,
         edition: i,
         date: Date.now(),
-        attributes: traits, // ! TODO: Format attributes
+        attributes: traits.map((trait) => ({
+          trait_type: trait.name,
+          value: trait.value,
+        })),
       };
       metadatas.push(metadata);
 
