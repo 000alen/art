@@ -12,7 +12,14 @@ async function main() {
       width: 512,
       height: 512,
       generateBackground: true,
-      layers: ["Eyeball", "Shine", "Iris"],
+      layers: [
+        "Eyeball",
+        "Eye color",
+        "Shine",
+        "Iris",
+        "Bottom lid",
+        "Top lid",
+      ],
     },
     inputDir,
     outputDir
@@ -20,8 +27,8 @@ async function main() {
   await factory.loadLayers();
   await factory.bootstrapOutput();
 
-  // const attributes = factory.generateRandomAttributes(10);
-  const attributes = factory.generateAllAttributes();
+  const attributes = factory.generateRandomAttributes(100);
+  // const attributes = factory.generateAllAttributes();
   await factory.generateImages(attributes);
   await factory.generateMetadata(attributes);
 }

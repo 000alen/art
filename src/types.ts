@@ -1,3 +1,5 @@
+export const RARITY_DELIMITER = "#";
+
 export interface IConfiguration {
   name: string;
   description: string;

@@ -2,7 +2,8 @@ import { IAttributes, IConfiguration, IMetadata } from "./types";
 import fs from "fs";
 import path from "path";
 import Jimp from "jimp";
-import { randomColor } from "./utils";
+import { randomColor, rarity } from "./utils";
+import { rarityWeightedChoice } from "./random";
 
 export class NFTFactory {
   private layers: Map<string, { name: string; rarity: number }[]>;
@@ -45,7 +46,7 @@ export class NFTFactory {
           layerName,
           layersElements[i].map((layerElement) => ({
             name: layerElement,
-            rarity: 1, // ! TODO: Compute rarity
+            rarity: rarity(layerElement),
           }))
         );
       });
@@ -62,7 +63,6 @@ export class NFTFactory {
     fs.mkdirSync(path.join(this.outputDir, "images"));
   }
 
-  // ! TODO: Probability distribution is uniform; should consider element's rarity
   generateRandomAttributes(n: number): IAttributes[] {
     if (n > this.maxCombinations)
       console.warn(
@@ -76,12 +76,11 @@ export class NFTFactory {
 
       for (const layerName of this.configuration.layers) {
         const layerElements = this.layers.get(layerName)!;
-        const layerElement =
-          layerElements[Math.floor(Math.random() * layerElements.length)];
+        const name = rarityWeightedChoice(layerElements)!;
 
         attribute.push({
           name: layerName,
-          value: layerElement.name,
+          value: name,
         });
       }
 
