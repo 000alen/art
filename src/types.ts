@@ -4,6 +4,7 @@ export interface IConfiguration {
   width: number;
   height: number;
   generateBackground: boolean;
+  defaultBackground?: string | number;
   layers: string[];
 }
 

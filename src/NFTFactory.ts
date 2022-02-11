@@ -108,7 +108,9 @@ export class NFTFactory {
       const image = await Jimp.create(
         this.configuration.width,
         this.configuration.height,
-        randomColor()
+        this.configuration.generateBackground
+          ? randomColor()
+          : this.configuration.defaultBackground || 0xffffff
       );
 
       for (let j = 0; j < traits.length; j++) {

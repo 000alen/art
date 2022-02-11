@@ -12,7 +12,7 @@ async function main() {
       description: "Test",
       width: 512,
       height: 512,
-      generateBackground: false,
+      generateBackground: true,
       layers: ["Eyeball", "Shine", "Iris"],
     },
     inputDir,
