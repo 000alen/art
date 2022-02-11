@@ -1,4 +1,4 @@
-import { IAttributes, IConfiguration } from "./types";
+import { IAttributes, IConfiguration, IMetadata } from "./types";
 import fs from "fs";
 import path from "path";
 import Jimp from "jimp";
@@ -15,6 +15,12 @@ export class NFTFactory {
   ) {
     this.layers = new Map<string, { name: string; rarity: number }[]>();
     this.buffers = new Map<string, Buffer>();
+  }
+
+  get maxCombinations() {
+    return this.configuration.layers.reduce((accumulator, layer) => {
+      return accumulator * this.layers.get(layer)!.length;
+    }, 1);
   }
 
   async loadLayers() {
@@ -40,7 +46,6 @@ export class NFTFactory {
           layersElements[i].map((layerElement) => ({
             name: layerElement,
             rarity: 1, // ! TODO: Compute rarity
-            buffer: undefined,
           }))
         );
       });
@@ -59,6 +64,11 @@ export class NFTFactory {
 
   // ! TODO: Probability distribution is uniform; should consider element's rarity
   generateRandomAttributes(n: number): IAttributes[] {
+    if (n > this.maxCombinations)
+      console.warn(
+        `WARN: n > maxCombinations (${n} > ${this.maxCombinations})`
+      );
+
     const attributes: IAttributes[] = [];
 
     for (let i = 0; i < n; i++) {
@@ -81,13 +91,39 @@ export class NFTFactory {
     return attributes;
   }
 
-  // ! TODO: Implement a deterministic way to generate attributes
-  generateAttributes(n: number): IAttributes[] {
-    throw new Error("Method not implemented yet.");
-  }
+  generateAllAttributes(): IAttributes[] {
+    const attributes: IAttributes[] = [];
 
-  // ! TODO: Implement metadata generation
-  generateMetadata(attributes: IAttributes[]) {}
+    function* generator(
+      configuration: IConfiguration,
+      layers: Map<string, { name: string; rarity: number }[]>,
+      n: number
+    ): Generator<IAttributes> {
+      if (n === 0) {
+        yield [];
+        return;
+      }
+
+      const layerName = configuration.layers[configuration.layers.length - n];
+      const layerElements = layers.get(layerName)!;
+
+      for (const layerElement of layerElements) {
+        for (const _ of generator(configuration, layers, n - 1)) {
+          yield [{ name: layerName, value: layerElement.name }, ..._];
+        }
+      }
+    }
+
+    for (const attribute of generator(
+      this.configuration,
+      this.layers,
+      this.configuration.layers.length
+    )) {
+      attributes.push(attribute);
+    }
+
+    return attributes;
+  }
 
   private composeImages(back: Jimp, front: Jimp): Jimp {
     back.composite(front, 0, 0);
@@ -126,5 +162,32 @@ export class NFTFactory {
 
       await image.writeAsync(path.join(this.outputDir, "images", `${i}.png`));
     }
+  }
+
+  async generateMetadata(attributes: IAttributes[]) {
+    const metadatas: IMetadata[] = [];
+    for (let i = 0; i < attributes.length; i++) {
+      const traits = attributes[i];
+
+      const metadata: IMetadata = {
+        name: this.configuration.name,
+        description: this.configuration.description,
+        image: `${i}.png`, // ! TODO: Use URI
+        edition: i,
+        date: Date.now(),
+        attributes: traits, // ! TODO: Format attributes
+      };
+      metadatas.push(metadata);
+
+      await fs.promises.writeFile(
+        path.join(this.outputDir, "json", `${i}.json`),
+        JSON.stringify(metadata)
+      );
+    }
+
+    await fs.promises.writeFile(
+      path.join(this.outputDir, "json", "metadata.json"),
+      JSON.stringify(metadatas)
+    );
   }
 }

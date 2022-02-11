@@ -22,6 +22,4 @@ export interface IMetadata {
   edition: number;
   date: number;
   attributes: IAttributes;
-  compiler: string;
-  dna: string;
 }

@@ -1,6 +1,5 @@
 import { NFTFactory } from "./src";
 import path from "path";
-import Jimp from "jimp";
 
 const inputDir = path.resolve("./sample/input/");
 const outputDir = path.resolve("./sample/output/");
@@ -21,8 +20,10 @@ async function main() {
   await factory.loadLayers();
   await factory.bootstrapOutput();
 
-  const attributes = factory.generateRandomAttributes(10);
-  factory.generateImages(attributes);
+  // const attributes = factory.generateRandomAttributes(10);
+  const attributes = factory.generateAllAttributes();
+  await factory.generateImages(attributes);
+  await factory.generateMetadata(attributes);
 }
 
 main();
