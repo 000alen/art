@@ -234,6 +234,10 @@ export class NFTFactory {
     return this.imagesCID!;
   }
 
+  private async ensureContract() {
+    await hre.run("compile");
+  }
+
   async deployMetadata(force: boolean = false): Promise<string> {
     if (this.metadataCID !== undefined && !force) {
       console.warn(
@@ -272,7 +276,7 @@ export class NFTFactory {
       return this.contractAddress;
     }
 
-    await hre.run("compile");
+    await this.ensureContract();
 
     // ! TODO: Why is this necessary?
     // @ts-ignore
