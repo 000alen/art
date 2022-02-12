@@ -24,12 +24,12 @@ async function main() {
     inputDir,
     outputDir
   );
-  await factory.loadLayers();
-  await factory.bootstrapOutput();
+  // await factory.loadLayers();
+  // await factory.bootstrapOutput();
 
-  const attributes = factory.generateRandomAttributes(10);
+  // const attributes = factory.generateRandomAttributes(10);
 
-  await factory.generateImages(attributes);
+  // await factory.generateImages(attributes);
   // const imagesCID = await factory.deployImages();
 
   // console.log(`Images CID: ${imagesCID}`);
@@ -38,6 +38,10 @@ async function main() {
   // const metadataCID = await factory.deployMetadata();
 
   // console.log(`Metadata CID: ${metadataCID}`);
+
+  const address = await factory.deployContract();
+
+  console.log(`Address: ${address}`);
 }
 
 main()
