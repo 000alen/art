@@ -4,7 +4,10 @@ import path from "path";
 import Jimp from "jimp";
 import { randomColor, rarityWeightedChoice, rarity } from "./utils";
 import { create, IPFS } from "ipfs";
+import hre from "hardhat";
 
+// ! TODO: Support vectorized images
+// TODO: Support 3D assets
 export class NFTFactory {
   private layers: Map<string, { name: string; rarity: number }[]>;
   private buffers: Map<string, Buffer>;
@@ -12,6 +15,7 @@ export class NFTFactory {
 
   public imagesCID?: string;
   public metadataCID?: string;
+  public contractAddress?: string;
 
   constructor(
     public configuration: IConfiguration,
@@ -133,7 +137,6 @@ export class NFTFactory {
     return back;
   }
 
-  // ! TODO: Make async
   private async ensureBuffer(elementKey: string) {
     if (!this.buffers.has(elementKey)) {
       const buffer = await fs.promises.readFile(
@@ -231,6 +234,10 @@ export class NFTFactory {
     return this.imagesCID!;
   }
 
+  private async ensureContract() {
+    await hre.run("compile");
+  }
+
   async deployMetadata(force: boolean = false): Promise<string> {
     if (this.metadataCID !== undefined && !force) {
       console.warn(
@@ -258,5 +265,45 @@ export class NFTFactory {
       if (result.path == "json") this.metadataCID = result.cid.toString();
 
     return this.metadataCID!;
+  }
+
+  // ! TODO: Implement
+  async deployContract(force: boolean = false): Promise<string> {
+    if (this.contractAddress !== undefined && !force) {
+      console.warn(
+        `WARN: contract has already been deployed (address: ${this.contractAddress})`
+      );
+      return this.contractAddress;
+    }
+
+    await this.ensureContract();
+
+    const contractArgs = {
+      name: this.configuration.name,
+      symbol: "TODO", // ! TODO
+      initBaseURI: `ipfs://${this.metadataCID}/`,
+      initNotRevealedURI: `ipfs://${this.metadataCID}/`,
+    };
+
+    const address = await hre.run("deploy", contractArgs);
+    await hre.run("verify:verify", {
+      address,
+      constructorArguments: [
+        contractArgs.name,
+        contractArgs.symbol,
+        contractArgs.initBaseURI,
+        contractArgs.initNotRevealedURI,
+      ],
+    });
+
+    return address;
+
+    // // ! TODO: Why is this necessary?
+    // // @ts-ignore
+    // const Greeter = await hre.ethers.getContractFactory("Greeter");
+    // const greeter = await Greeter.deploy("Hello, Hardhat!");
+    // await greeter.deployed();
+
+    // return greeter.address;
   }
 }
