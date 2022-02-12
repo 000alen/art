@@ -1,4 +1,7 @@
 output/
+cache/
+typechain-types/
+artifacts/
 
 # Logs
 logs
