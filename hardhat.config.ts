@@ -9,15 +9,18 @@ import "solidity-coverage";
 
 dotenv.config();
 
-task("deploy", "Deploy the smart contract", async (taskArgs, hre) => {
-  console.log(taskArgs);
+task("deploy")
+  .addParam("name")
+  .addParam("symbol")
+  .addParam("initBaseURI")
+  .addParam("initNotRevealedURI")
+  .setAction(async ({ name, symbol, initBaseURI, initNotRevealedURI }, hre) => {
+    const NFT = await hre.ethers.getContractFactory("NFT");
+    const nft = await NFT.deploy(name, symbol, initBaseURI, initNotRevealedURI);
+    await nft.deployed();
 
-  const Greeter = await hre.ethers.getContractFactory("Greeter");
-  const greeter = await Greeter.deploy("Hello, Hardhat!");
-  await greeter.deployed();
-
-  return greeter.address;
-});
+    return nft.address;
+  });
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more

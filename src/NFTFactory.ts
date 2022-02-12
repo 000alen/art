@@ -278,7 +278,24 @@ export class NFTFactory {
 
     await this.ensureContract();
 
-    const address = await hre.run("deploy");
+    const contractArgs = {
+      name: this.configuration.name,
+      symbol: "TODO", // ! TODO
+      initBaseURI: `ipfs://${this.metadataCID}/`,
+      initNotRevealedURI: `ipfs://${this.metadataCID}/`,
+    };
+
+    const address = await hre.run("deploy", contractArgs);
+    await hre.run("verify:verify", {
+      address,
+      constructorArguments: [
+        contractArgs.name,
+        contractArgs.symbol,
+        contractArgs.initBaseURI,
+        contractArgs.initNotRevealedURI,
+      ],
+    });
+
     return address;
 
     // // ! TODO: Why is this necessary?
