@@ -1,64 +1,46 @@
-# Art
+# Advanced Sample Hardhat Project
 
-## `interface IConfiguration`
+This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
 
-```typescript
-{
-    name: "Test Collection",
-    description: "This is just a test collection.",
+The project comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts. It also comes with a variety of other tools, preconfigured to work with the project code.
 
-    width: 512,
-    height: 512,
+Try running some of the following tasks:
 
-    generateBackground: true,
-
-    layers: [
-        "Eyeball",
-        "Eye color",
-        "Iris",
-        "Shine",
-    ]
-};
+```shell
+npx hardhat accounts
+npx hardhat compile
+npx hardhat clean
+npx hardhat test
+npx hardhat node
+npx hardhat help
+REPORT_GAS=true npx hardhat test
+npx hardhat coverage
+npx hardhat run scripts/deploy.ts
+TS_NODE_FILES=true npx ts-node scripts/deploy.ts
+npx eslint '**/*.{js,ts}'
+npx eslint '**/*.{js,ts}' --fix
+npx prettier '**/*.{json,sol,md}' --check
+npx prettier '**/*.{json,sol,md}' --write
+npx solhint 'contracts/**/*.sol'
+npx solhint 'contracts/**/*.sol' --fix
 ```
 
-## `interface ITrait`
+# Etherscan verification
 
-```typescript
-{
-    trait: "Eyeball",
-    value: "White"
-}
+To try out Etherscan verification, you first need to deploy a contract to an Ethereum network that's supported by Etherscan, such as Ropsten.
+
+In this project, copy the .env.example file to a file named .env, and then edit it to fill in the details. Enter your Etherscan API key, your Ropsten node URL (eg from Alchemy), and the private key of the account which will send the deployment transaction. With a valid .env file in place, first deploy your contract:
+
+```shell
+hardhat run --network ropsten scripts/sample-script.ts
 ```
 
-## `interface IAttribute`
+Then, copy the deployment address and paste it in to replace `DEPLOYED_CONTRACT_ADDRESS` in this command:
 
-```typescript
-type IAttribute = ITrait[];
+```shell
+npx hardhat verify --network ropsten DEPLOYED_CONTRACT_ADDRESS "Hello, Hardhat!"
 ```
 
-## `interface IMetadata`
+# Performance optimizations
 
-```typescript
-{
-  name: "Collection name",
-  description: "Just a collection description",
-  image: "ipfs://${cid}/1.png",
-  dna: "${dna}",
-  edition: 4,
-  date: 1644516248675,
-  attributes: IAttribute[],
-  compiler: "Art Engine"
-}
-```
-
-## `class NFTFactory`
-
-### `constructor(configuration: IConfiguration, inputDir: string)`
-
-### `sample(n: number) -> IAttribute[]`
-
-### `generateAttributes(n: number) -> IAttribute[]`
-
-### `generateMetadata(attributes: IAttributes[], uri: string) -> IMetadata`
-
-### `renderImages(attributes: IAttributes[]) -> Iterator<Buffer>`
+For faster runs of your tests and scripts, consider skipping ts-node's type checking by setting the environment variable `TS_NODE_TRANSPILE_ONLY` to `1` in hardhat's environment. For more details see [the documentation](https://hardhat.org/guides/typescript.html#performance-optimizations).
