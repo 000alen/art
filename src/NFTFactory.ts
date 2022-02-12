@@ -278,12 +278,15 @@ export class NFTFactory {
 
     await this.ensureContract();
 
-    // ! TODO: Why is this necessary?
-    // @ts-ignore
-    const Greeter = await hre.ethers.getContractFactory("Greeter");
-    const greeter = await Greeter.deploy("Hello, Hardhat!");
-    await greeter.deployed();
+    const address = await hre.run("deploy");
+    return address;
 
-    return greeter.address;
+    // // ! TODO: Why is this necessary?
+    // // @ts-ignore
+    // const Greeter = await hre.ethers.getContractFactory("Greeter");
+    // const greeter = await Greeter.deploy("Hello, Hardhat!");
+    // await greeter.deployed();
+
+    // return greeter.address;
   }
 }

@@ -10,12 +10,13 @@ import "solidity-coverage";
 dotenv.config();
 
 task("deploy", "Deploy the smart contract", async (taskArgs, hre) => {
+  console.log(taskArgs);
+
   const Greeter = await hre.ethers.getContractFactory("Greeter");
   const greeter = await Greeter.deploy("Hello, Hardhat!");
-
   await greeter.deployed();
 
-  console.log("Greeter deployed to:", greeter.address);
+  return greeter.address;
 });
 
 // You need to export an object to set up your config
@@ -23,6 +24,7 @@ task("deploy", "Deploy the smart contract", async (taskArgs, hre) => {
 
 const config: HardhatUserConfig = {
   solidity: "0.8.4",
+  defaultNetwork: "ropsten",
   networks: {
     ropsten: {
       url: process.env.ROPSTEN_URL || "",
