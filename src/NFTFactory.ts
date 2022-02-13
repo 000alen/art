@@ -163,33 +163,45 @@ export class NFTFactory {
     }
   }
 
-  // ! TODO: Evaluate parallelism or batching
-  //         As far as I know, Javascript does not support parallelism (?)
+  // ! TODO: Careful with memory usage
   async generateImages(attributes: IAttributes[]) {
-    for (let i = 0; i < attributes.length; i++) {
-      const traits = attributes[i];
+    const baseImages = await Promise.all(
+      attributes.map(() =>
+        Jimp.create(
+          this.configuration.width,
+          this.configuration.height,
+          this.configuration.generateBackground
+            ? randomColor()
+            : this.configuration.defaultBackground || 0xffffff
+        )
+      )
+    );
 
-      const image = await Jimp.create(
-        this.configuration.width,
-        this.configuration.height,
-        this.configuration.generateBackground
-          ? randomColor()
-          : this.configuration.defaultBackground || 0xffffff
-      );
+    const composedImages = await Promise.all(
+      baseImages.map(async (image, i) => {
+        // Select attributes
+        const traits: IAttributes = attributes[i];
 
-      for (let j = 0; j < traits.length; j++) {
-        const trait = traits[j];
+        // Go ahead with the next IAtributes
+        for (let trait of traits) {
+          const elementKey = path.join(trait.name, trait.value);
+          await this.ensureBuffer(elementKey);
+          const current = await Jimp.read(this.buffers.get(elementKey)!);
 
-        const elementKey = path.join(trait.name, trait.value);
-        await this.ensureBuffer(elementKey);
+          this.composeImages(image, current);
+        }
 
-        const current = await Jimp.read(this.buffers.get(elementKey)!);
+        return image;
+      })
+    );
 
-        this.composeImages(image, current);
-      }
-
-      await image.writeAsync(path.join(this.outputDir, "images", `${i + 1}.png`));
-    }
+    await Promise.all(
+      composedImages.map((composedImage, i) =>
+        composedImage.writeAsync(
+          path.join(this.outputDir, "images", `${i + 1}.png`)
+        )
+      )
+    );
   }
 
   async generateMetadata(cid: string, attributes: IAttributes[]) {
