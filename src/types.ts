@@ -2,6 +2,7 @@ export const RARITY_DELIMITER = "#";
 
 export interface IConfiguration {
   name: string;
+  symbol: string;
   description: string;
   width: number;
   height: number;
@@ -24,4 +25,10 @@ export interface IMetadata {
   edition: number;
   date: number;
   attributes: IAttributes;
+}
+
+export interface IInstance {
+  imagesCID?: string;
+  metadataCID?: string;
+  contractAddress?: string;
 }
