@@ -149,30 +149,56 @@ export class NFTFactory {
   // ! TODO: Evaluate parallelism or batching
   //         As far as I know, Javascript does not support parallelism (?)
   async generateImages(attributes: IAttributes[]) {
-    for (let i = 0; i < attributes.length; i++) {
-      const traits = attributes[i];
+    
+    const created_images = attributes.map( () => {
 
-      const image = await Jimp.create(
+      return Jimp.create(
         this.configuration.width,
         this.configuration.height,
         this.configuration.generateBackground
           ? randomColor()
           : this.configuration.defaultBackground || 0xffffff
       );
+      
+    });
 
-      for (let j = 0; j < traits.length; j++) {
-        const trait = traits[j];
+    Promise.all(created_images).then( async (images) => {
 
-        const elementKey = path.join(trait.name, trait.value);
-        await this.ensureBuffer(elementKey);
+      let traits_number: number = 0;
 
-        const current = await Jimp.read(this.buffers.get(elementKey)!);
+      const composing_process = images.map( async (image) => {
 
-        this.composeImages(image, current);
-      }
+        // Select attributes
+        const traits: IAttributes = attributes[traits_number];
+        const saved_trait_number: number = traits_number;
 
-      await image.writeAsync(path.join(this.outputDir, "images", `${i}.png`));
-    }
+        // Go ahead with the next IAtributes
+        traits_number += 1;
+
+        
+        for (let trait of traits) {
+
+          const elementKey = path.join(trait.name, trait.value);
+          await this.ensureBuffer(elementKey);
+    
+          const current = await Jimp.read(this.buffers.get(elementKey)!);
+    
+          this.composeImages(image, current);
+        }
+
+        (image as any).image_index = saved_trait_number;
+        return image;
+      });
+
+      Promise.all(composing_process).then( (composed_images) => {
+
+        composed_images.map( (composed_image) => {
+          composed_image.writeAsync(path.join(this.outputDir, "images", `${(composed_image as any).image_index}.png`));
+        });
+
+      }).catch(console.error);
+
+    }).catch(console.error);
   }
 
   async generateMetadata(cid: string, attributes: IAttributes[]) {

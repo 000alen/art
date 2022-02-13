@@ -30,6 +30,7 @@ async function main() {
   const attributes = factory.generateRandomAttributes(10);
 
   await factory.generateImages(attributes);
+    /*
   const imagesCID = await factory.deployImages();
 
   console.log(`Images CID: ${imagesCID}`);
@@ -42,6 +43,7 @@ async function main() {
   const address = await factory.deployContract();
 
   console.log(`Address: ${address}`);
+  */
 }
 
 main()
