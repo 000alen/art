@@ -8,14 +8,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract NFT is ERC721Enumerable, Ownable {
     using Strings for uint256;
 
-    // ipfs://${CID}/
-    string baseURI;
+    string baseURI;                             // NOTE: ipfs://${CID}/ 
     string public baseExtension = ".json";
     uint256 public cost = 0.05 ether;
-    uint256 public maxSupply = 10000;
-    uint256 public maxMintAmount = 20;
+    uint256 public maxSupply = 10;
+    uint256 public maxMintAmount = 3;
     bool public paused = false;
-    bool public revealed = false;
+    bool public revealed = true;                // ! TODO
     string public notRevealedUri;
 
     constructor(
