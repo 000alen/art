@@ -146,59 +146,45 @@ export class NFTFactory {
     }
   }
 
-  // ! TODO: Evaluate parallelism or batching
-  //         As far as I know, Javascript does not support parallelism (?)
+  // ! TODO: Careful with memory usage
   async generateImages(attributes: IAttributes[]) {
-    
-    const created_images = attributes.map( () => {
+    const baseImages = await Promise.all(
+      attributes.map(() =>
+        Jimp.create(
+          this.configuration.width,
+          this.configuration.height,
+          this.configuration.generateBackground
+            ? randomColor()
+            : this.configuration.defaultBackground || 0xffffff
+        )
+      )
+    );
 
-      return Jimp.create(
-        this.configuration.width,
-        this.configuration.height,
-        this.configuration.generateBackground
-          ? randomColor()
-          : this.configuration.defaultBackground || 0xffffff
-      );
-      
-    });
-
-    Promise.all(created_images).then( async (images) => {
-
-      let traits_number: number = 0;
-
-      const composing_process = images.map( async (image) => {
-
+    const composedImages = await Promise.all(
+      baseImages.map(async (image, i) => {
         // Select attributes
-        const traits: IAttributes = attributes[traits_number];
-        const saved_trait_number: number = traits_number;
+        const traits: IAttributes = attributes[i];
 
         // Go ahead with the next IAtributes
-        traits_number += 1;
-
-        
         for (let trait of traits) {
-
           const elementKey = path.join(trait.name, trait.value);
           await this.ensureBuffer(elementKey);
-    
           const current = await Jimp.read(this.buffers.get(elementKey)!);
-    
+
           this.composeImages(image, current);
         }
 
-        (image as any).image_index = saved_trait_number;
         return image;
-      });
+      })
+    );
 
-      Promise.all(composing_process).then( (composed_images) => {
-
-        composed_images.map( (composed_image) => {
-          composed_image.writeAsync(path.join(this.outputDir, "images", `${(composed_image as any).image_index}.png`));
-        });
-
-      }).catch(console.error);
-
-    }).catch(console.error);
+    await Promise.all(
+      composedImages.map((composedImage, i) =>
+        composedImage.writeAsync(
+          path.join(this.outputDir, "images", `${i + 1}.png`)
+        )
+      )
+    );
   }
 
   async generateMetadata(cid: string, attributes: IAttributes[]) {
@@ -323,13 +309,5 @@ export class NFTFactory {
     });
 
     return address;
-
-    // // ! TODO: Why is this necessary?
-    // // @ts-ignore
-    // const Greeter = await hre.ethers.getContractFactory("Greeter");
-    // const greeter = await Greeter.deploy("Hello, Hardhat!");
-    // await greeter.deployed();
-
-    // return greeter.address;
   }
 }
