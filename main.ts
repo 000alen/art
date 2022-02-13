@@ -26,10 +26,11 @@ async function main() {
   // };
   // factory.loadInstance(instance);
 
-  // await factory.loadLayers();
-  // await factory.bootstrapOutput();
-  // const attributes = factory.generateRandomAttributes(10);
-  // await factory.generateImages(attributes);
+  await factory.loadLayers();
+  await factory.bootstrapOutput();
+  const attributes = factory.generateRandomAttributes(10);
+  await factory.generateImages(attributes);
+
   // const imagesCID = await factory.deployImages();
   // await factory.generateMetadata(imagesCID, attributes);
   // await factory.deployMetadata();

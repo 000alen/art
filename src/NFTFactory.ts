@@ -165,42 +165,27 @@ export class NFTFactory {
 
   // ! TODO: Careful with memory usage
   async generateImages(attributes: IAttributes[]) {
-    const baseImages = await Promise.all(
-      attributes.map(() =>
-        Jimp.create(
+    await Promise.all(
+      attributes.map(async (traits, i) => {
+        const image = await Jimp.create(
           this.configuration.width,
           this.configuration.height,
           this.configuration.generateBackground
             ? randomColor()
             : this.configuration.defaultBackground || 0xffffff
-        )
-      )
-    );
+        );
 
-    const composedImages = await Promise.all(
-      baseImages.map(async (image, i) => {
-        // Select attributes
-        const traits: IAttributes = attributes[i];
-
-        // Go ahead with the next IAtributes
-        for (let trait of traits) {
+        for (const trait of traits) {
           const elementKey = path.join(trait.name, trait.value);
           await this.ensureBuffer(elementKey);
           const current = await Jimp.read(this.buffers.get(elementKey)!);
-
           this.composeImages(image, current);
         }
 
-        return image;
-      })
-    );
-
-    await Promise.all(
-      composedImages.map((composedImage, i) =>
-        composedImage.writeAsync(
+        await image.writeAsync(
           path.join(this.outputDir, "images", `${i + 1}.png`)
-        )
-      )
+        );
+      })
     );
   }
 
