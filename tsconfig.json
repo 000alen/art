@@ -99,8 +99,8 @@
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
   },
   "include": [
-    "./scripts/**/*.ts",
-    "./test/**/*.ts",
+    // "./scripts/**/*.ts",
+    // "./test/**/*.ts",
     "./typechain-types/**/*.ts",
     "./src/**/*.ts",
     "./main.ts"

@@ -1,2 +1,2 @@
 export { NFTFactory } from "./NFTFactory";
-export { IConfiguration } from "./types";
+export { IConfiguration, IInstance } from "./types";
