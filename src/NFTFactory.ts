@@ -1,10 +1,13 @@
-import { IAttributes, IConfiguration } from "./types";
+import { IAttributes, IConfiguration, IInstance } from "./types";
 import fs from "fs";
 import path from "path";
 import Jimp from "jimp";
 import { randomColor, rarityWeightedChoice, rarity } from "./utils";
-import { create, IPFS } from "ipfs";
+import { CID, create, IPFS } from "ipfs";
 import hre from "hardhat";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 // ! TODO: Support vectorized images
 // TODO: Support 3D assets
@@ -30,6 +33,20 @@ export class NFTFactory {
     return this.configuration.layers.reduce((accumulator, layer) => {
       return accumulator * this.layers.get(layer)!.length;
     }, 1);
+  }
+
+  get instance(): IInstance {
+    return {
+      imagesCID: this.imagesCID,
+      metadataCID: this.metadataCID,
+      contractAddress: this.contractAddress,
+    };
+  }
+
+  loadInstance({ imagesCID, metadataCID, contractAddress }: IInstance) {
+    this.imagesCID = imagesCID;
+    this.metadataCID = metadataCID;
+    this.contractAddress = contractAddress;
   }
 
   async loadLayers() {
@@ -195,7 +212,7 @@ export class NFTFactory {
       const metadata = {
         name: this.configuration.name,
         description: this.configuration.description,
-        image: `ipfs://${cid}/${i}.png`,
+        image: `ipfs://${cid}/${i + 1}.png`,
         edition: i,
         date: Date.now(),
         attributes: traits.map((trait) => ({
@@ -206,7 +223,7 @@ export class NFTFactory {
       metadatas.push(metadata);
 
       await fs.promises.writeFile(
-        path.join(this.outputDir, "json", `${i}.json`),
+        path.join(this.outputDir, "json", `${i + 1}.json`),
         JSON.stringify(metadata)
       );
     }
@@ -218,7 +235,16 @@ export class NFTFactory {
   }
 
   private async ensureIPFS() {
-    if (this.ipfs === undefined) this.ipfs = await create();
+    if (this.ipfs === undefined) {
+      this.ipfs = await create();
+
+      // if (process.env.PINATA_KEY !== undefined) {
+      //   this.ipfs!.pin.remote.service.add("pinata", {
+      //     endpoint: new URL("https://api.pinata.cloud"),
+      //     key: process.env.PINATA_KEY,
+      //   });
+      // }
+    }
   }
 
   // ! TODO: Optimize; buffers might be loaded in this.buffers (use this.ensureBuffer)
@@ -242,6 +268,12 @@ export class NFTFactory {
 
     for await (const result of this.ipfs!.addAll(imageFiles))
       if (result.path == "images") this.imagesCID = result.cid.toString();
+
+    // if (process.env.PINATA_KEY !== undefined) {
+    //   await this.ipfs!.pin.remote.add(CID.parse(this.imagesCID!), {
+    //     service: "pinata",
+    //   });
+    // }
 
     return this.imagesCID!;
   }
@@ -276,6 +308,12 @@ export class NFTFactory {
     for await (const result of this.ipfs!.addAll(jsonFiles))
       if (result.path == "json") this.metadataCID = result.cid.toString();
 
+    // if (process.env.PINATA_KEY !== undefined) {
+    //   await this.ipfs!.pin.remote.add(CID.parse(this.metadataCID!), {
+    //     service: "pinata",
+    //   });
+    // }
+
     return this.metadataCID!;
   }
 
@@ -292,14 +330,28 @@ export class NFTFactory {
 
     const contractArgs = {
       name: this.configuration.name,
-      symbol: "TODO", // ! TODO
+      symbol: this.configuration.symbol,
       initBaseURI: `ipfs://${this.metadataCID}/`,
       initNotRevealedURI: `ipfs://${this.metadataCID}/`,
     };
 
-    const address = await hre.run("deploy", contractArgs);
+    this.contractAddress = await hre.run("deploy", contractArgs);
+
+    await this.verifyContract();
+
+    return this.contractAddress!;
+  }
+
+  async verifyContract(): Promise<void> {
+    const contractArgs = {
+      name: this.configuration.name,
+      symbol: this.configuration.symbol,
+      initBaseURI: `ipfs://${this.metadataCID}/`,
+      initNotRevealedURI: `ipfs://${this.metadataCID}/`,
+    };
+
     await hre.run("verify:verify", {
-      address,
+      address: this.contractAddress,
       constructorArguments: [
         contractArgs.name,
         contractArgs.symbol,
@@ -307,7 +359,5 @@ export class NFTFactory {
         contractArgs.initNotRevealedURI,
       ],
     });
-
-    return address;
   }
 }
