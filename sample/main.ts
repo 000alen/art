@@ -1,4 +1,4 @@
-import { NFTFactory, IInstance } from "./src";
+import { NFTFactory, IInstance } from "../src";
 import path from "path";
 
 const inputDir = path.resolve("./sample/input/");

@@ -98,12 +98,6 @@
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
   },
-  "include": [
-    // "./scripts/**/*.ts",
-    // "./test/**/*.ts",
-    "./typechain-types/**/*.ts",
-    "./src/**/*.ts",
-    "./main.ts"
-  ],
+  "include": ["./typechain-types/**/*.ts", "./src/**/*.ts"],
   "files": ["./hardhat.config.ts"]
 }
