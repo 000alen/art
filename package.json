@@ -2,9 +2,13 @@
   "name": "art",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/main.js",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "files": [
+    "dist/"
+  ],
   "scripts": {
-    "start": "ts-node main.ts"
+    "start": "ts-node sample/main.ts"
   },
   "keywords": [],
   "author": "",

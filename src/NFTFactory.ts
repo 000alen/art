@@ -164,6 +164,7 @@ export class NFTFactory {
   }
 
   // ! TODO: Careful with memory usage
+  // ! TODO: Change the algorithm complexity from O(n) to O(log n)
   async generateImages(attributes: IAttributes[]) {
     await Promise.all(
       attributes.map(async (traits, i) => {
@@ -189,6 +190,15 @@ export class NFTFactory {
     );
   }
 
+  private getTraitValueByFilename(filename: string): string {
+    const trait_value = filename.split("#");
+
+    if (trait_value.length != 2)
+      throw new Error(`File ${filename} doesnt have the correct format`);
+
+    return trait_value[0];
+  }
+
   async generateMetadata(cid: string, attributes: IAttributes[]) {
     const metadatas = [];
     for (let i = 0; i < attributes.length; i++) {
@@ -202,7 +212,7 @@ export class NFTFactory {
         date: Date.now(),
         attributes: traits.map((trait) => ({
           trait_type: trait.name,
-          value: trait.value,
+          value: this.getTraitValueByFilename(trait.value),
         })),
       };
       metadatas.push(metadata);
@@ -313,6 +323,12 @@ export class NFTFactory {
 
     await this.ensureContract();
 
+    if (this.metadataCID == undefined)
+      console.log("DANGER: Metadata CID is undefined, high change it doesnt exist");
+
+    if (this.imagesCID == undefined)
+      console.log("DANGER: Images CID is undefined, high change it doesnt exist");
+
     const contractArgs = {
       name: this.configuration.name,
       symbol: this.configuration.symbol,
@@ -322,7 +338,25 @@ export class NFTFactory {
 
     this.contractAddress = await hre.run("deploy", contractArgs);
 
+    if (this.contractAddress == undefined)
+      console.log(`WARN: Contract address is undefined even with contract deployed`);
+
+    // Make sure if the contract exist
     await this.verifyContract();
+
+    // Contract data
+    const contractInstance = {
+      ...contractArgs,
+      metadadataCID: this.metadataCID,
+      imageCID: this.imagesCID,
+      contractAddress: this.contractAddress
+    }
+
+    // Parse the Javascript Object to JSON String
+    const contractInstanceJSON: string = JSON.stringify(contractInstance); 
+
+    // Write JSON string
+    await fs.promises.writeFile(path.join(this.outputDir, "instance.json"), contractInstanceJSON);
 
     return this.contractAddress!;
   }
