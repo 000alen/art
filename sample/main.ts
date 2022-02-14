@@ -1,11 +1,11 @@
-import { NFTFactory, IInstance } from "../src";
+import { Factory, IInstance } from "../src";
 import path from "path";
 
 const inputDir = path.resolve("./sample/input/");
 const outputDir = path.resolve("./sample/output/");
 
 async function main() {
-  const factory = new NFTFactory(
+  const factory = new Factory(
     {
       name: "Test",
       symbol: "TEST",

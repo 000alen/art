@@ -11,7 +11,7 @@ dotenv.config();
 
 // ! TODO: Support vectorized images
 // TODO: Support 3D assets
-export class NFTFactory {
+export class Factory {
   private layers: Map<string, { name: string; rarity: number }[]>;
   private buffers: Map<string, Buffer>;
   private ipfs?: IPFS;
